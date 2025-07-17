@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Partials, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, ModalBuilder, TextInputBuilder, TextInputStyle, InteractionType } from 'discord.js';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -25,7 +25,7 @@ client.on('messageCreate', async (message) => {
   if (message.content === '!painel' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
     const embed = new EmbedBuilder()
       .setTitle('🎫 Abrir Ticket - Centro Médico Street')
-      .setDescription('Clique no botão abaixo para abrir um ticket com a equipe de suporte.\n\nApenas funcionários e a equipe de suporte terão acesso ao canal.')
+      .setDescription('Clique no botão abaixo para abrir um ticket com a equipe de suporte.\n\nApenas a equipe de suporte tera acesso ao canal.')
       .setColor(0x2ecc71)
       .setFooter({ text: 'Centro Médico Street', iconURL: client.user.displayAvatarURL() });
 
@@ -43,9 +43,31 @@ client.on('messageCreate', async (message) => {
 
 // Lógica de abertura de ticket
 client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isButton()) return;
-  if (interaction.customId === 'open_ticket') {
-    // Verifica se já existe um ticket aberto para o usuário
+  // ABRIR TICKET: mostrar modal para motivo
+  if (interaction.isButton() && interaction.customId === 'open_ticket') {
+    const existing = interaction.guild.channels.cache.find(
+      c => c.name === `ticket-${interaction.user.id}`
+    );
+    if (existing) {
+      await interaction.reply({ content: 'Você já possui um ticket aberto!', ephemeral: true });
+      return;
+    }
+    // Mostra modal para motivo
+    const modal = new ModalBuilder()
+      .setCustomId('modal_motivo_ticket')
+      .setTitle('Motivo do Ticket');
+    const motivoInput = new TextInputBuilder()
+      .setCustomId('motivo_ticket')
+      .setLabel('Descreva o motivo do seu ticket')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true);
+    modal.addComponents(new ActionRowBuilder().addComponents(motivoInput));
+    await interaction.showModal(modal);
+    return;
+  }
+  // RECEBE MODAL DE MOTIVO DE ABERTURA
+  if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'modal_motivo_ticket') {
+    const motivo = interaction.fields.getTextInputValue('motivo_ticket');
     const existing = interaction.guild.channels.cache.find(
       c => c.name === `ticket-${interaction.user.id}`
     );
@@ -55,9 +77,11 @@ client.on('interactionCreate', async (interaction) => {
     }
     // Cria o canal do ticket
     const category = interaction.guild.channels.cache.get(process.env.TICKET_CATEGORY_ID || config.ticketCategoryId);
-    const supportRole = process.env.SUPPORT_ROLE_ID || config.supportRoleId;
+    const supportRole = '1277734174635196581';
+    // Pega o username do usuário, removendo espaços e caracteres especiais para nome do canal
+    const username = interaction.user.username.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
     const channel = await interaction.guild.channels.create({
-      name: `ticket-${interaction.user.id}`,
+      name: `ticket-${username}`,
       type: ChannelType.GuildText,
       parent: category ? category.id : null,
       permissionOverwrites: [
@@ -78,7 +102,7 @@ client.on('interactionCreate', async (interaction) => {
     // Mensagem de boas-vindas e botão para fechar
     const embed = new EmbedBuilder()
       .setTitle('🩺 Suporte Centro Médico Street')
-      .setDescription(`Olá <@${interaction.user.id}>, descreva sua solicitação e a equipe irá te atender em breve!`)
+      .setDescription(`Olá <@${interaction.user.id}>, descreva sua solicitação e a equipe irá te atender em breve!\n\n**Motivo:** ${motivo}`)
       .setColor(0x3498db)
       .setFooter({ text: 'Para fechar o ticket, clique no botão abaixo.' });
     const row = new ActionRowBuilder().addComponents(
@@ -90,9 +114,31 @@ client.on('interactionCreate', async (interaction) => {
     );
     await channel.send({ content: `<@${interaction.user.id}> <@&${supportRole}>`, embeds: [embed], components: [row] });
     await interaction.reply({ content: `Seu ticket foi criado: ${channel}`, ephemeral: true });
+    return;
   }
-  // Fechar ticket e gerar transcript
-  if (interaction.customId === 'close_ticket') {
+  // FECHAR TICKET: mostrar modal para motivo de fechamento
+  if (interaction.isButton() && interaction.customId === 'close_ticket') {
+    const channel = interaction.channel;
+    if (!channel.name.startsWith('ticket-')) {
+      await interaction.reply({ content: 'Este comando só pode ser usado em canais de ticket.', ephemeral: true });
+      return;
+    }
+    // Mostra modal para motivo de fechamento
+    const modal = new ModalBuilder()
+      .setCustomId('modal_motivo_fechamento')
+      .setTitle('Motivo do Fechamento');
+    const motivoInput = new TextInputBuilder()
+      .setCustomId('motivo_fechamento')
+      .setLabel('Por que está fechando o ticket?')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true);
+    modal.addComponents(new ActionRowBuilder().addComponents(motivoInput));
+    await interaction.showModal(modal);
+    return;
+  }
+  // RECEBE MODAL DE MOTIVO DE FECHAMENTO
+  if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'modal_motivo_fechamento') {
+    const motivoFechamento = interaction.fields.getTextInputValue('motivo_fechamento');
     const channel = interaction.channel;
     if (!channel.name.startsWith('ticket-')) {
       await interaction.reply({ content: 'Este comando só pode ser usado em canais de ticket.', ephemeral: true });
@@ -107,7 +153,7 @@ client.on('interactionCreate', async (interaction) => {
     for (const msg of sorted) {
       html += `<li><b>${msg.author.tag}</b> [${new Date(msg.createdTimestamp).toLocaleString('pt-BR')}]<br>${msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`;
     }
-    html += '</ul></body></html>';
+    html += `</ul><p><b>Motivo do fechamento:</b> ${motivoFechamento}</p></body></html>`;
     // Salva transcript temporariamente
     const fileName = `transcript-${channel.name}.html`;
     fs.writeFileSync(fileName, html);
@@ -120,6 +166,7 @@ client.on('interactionCreate', async (interaction) => {
     fs.unlinkSync(fileName);
     // Deleta o canal do ticket
     setTimeout(() => channel.delete('Ticket fechado'), 2000);
+    return;
   }
 });
 
