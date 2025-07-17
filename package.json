@@ -1,0 +1,14 @@
+{
+  "name": "centro-medico-street-ticket-bot",
+  "version": "1.0.0",
+  "description": "Bot de tickets para funcionários do Centro Médico Street no Discord.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5"
+  }
+} 
