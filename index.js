@@ -81,7 +81,7 @@ client.on('interactionCreate', async (interaction) => {
     // Pega o username do usuário, removendo espaços e caracteres especiais para nome do canal
     const username = interaction.user.username.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
     const channel = await interaction.guild.channels.create({
-      name: `ticket-${username}`,
+      name: `🎫・hp-@${username}`,
       type: ChannelType.GuildText,
       parent: category ? category.id : null,
       permissionOverwrites: [
@@ -144,16 +144,39 @@ client.on('interactionCreate', async (interaction) => {
       await interaction.reply({ content: 'Este comando só pode ser usado em canais de ticket.', ephemeral: true });
       return;
     }
-    await interaction.reply({ content: 'Fechando ticket e gerando transcript...', ephemeral: true });
+    await interaction.reply({ content: '⏳ Salvando e finalizando o ticket... Gerando transcript detalhado para registro. Por favor, aguarde.', ephemeral: true });
     // Busca mensagens do canal
     const messages = await channel.messages.fetch({ limit: 100 });
     const sorted = Array.from(messages.values()).sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-    // Gera transcript em HTML
-    let html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Transcript Ticket</title></head><body><h2>Transcript do Ticket: ${channel.name}</h2><ul>`;
+    // Gera transcript em HTML estilizado
+    let html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Transcript do Ticket - ${channel.name}</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6fa; color: #222; margin: 0; padding: 24px; }
+    .header { background: #2ecc71; color: #fff; padding: 16px 24px; border-radius: 8px 8px 0 0; }
+    .ticket-info { margin: 16px 0 24px 0; font-size: 1.1em; }
+    ul { list-style: none; padding: 0; }
+    li { background: #fff; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px #0001; padding: 12px 18px; }
+    .author { font-weight: bold; color: #2980b9; }
+    .timestamp { color: #888; font-size: 0.95em; margin-left: 8px; }
+    .motivo { background: #eafaf1; border-left: 4px solid #2ecc71; padding: 8px 14px; margin-bottom: 18px; border-radius: 4px; }
+    .footer { margin-top: 32px; color: #888; font-size: 0.95em; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Transcript do Ticket</h1>
+    <div class="ticket-info">Canal: <b>${channel.name}</b></div>
+  </div>
+  <div class="motivo"><b>Motivo do fechamento:</b> ${motivoFechamento}</div>
+  <ul>`;
     for (const msg of sorted) {
-      html += `<li><b>${msg.author.tag}</b> [${new Date(msg.createdTimestamp).toLocaleString('pt-BR')}]<br>${msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`;
+      html += `<li><span class='author'>${msg.author.tag}</span> <span class='timestamp'>[${new Date(msg.createdTimestamp).toLocaleString('pt-BR')}]</span><br>${msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`;
     }
-    html += `</ul><p><b>Motivo do fechamento:</b> ${motivoFechamento}</p></body></html>`;
+    html += `</ul><div class='footer'>Transcript gerado automaticamente pelo sistema de tickets - Centro Médico Street</div></body></html>`;
     // Salva transcript temporariamente
     const fileName = `transcript-${channel.name}.html`;
     fs.writeFileSync(fileName, html);
