@@ -152,42 +152,76 @@ client.on('interactionCreate', async (interaction) => {
     // Busca mensagens do canal
     const messages = await channel.messages.fetch({ limit: 100 });
     const sorted = Array.from(messages.values()).sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-    // Gera transcript em HTML estilizado
+    // Dados do ticket
+    const donoTicket = channel.permissionOverwrites.cache.find(po => po.allow.has(PermissionsBitField.Flags.ViewChannel) && po.id !== '1277734174635196581' && po.id !== channel.guild.id);
+    const donoUser = donoTicket ? await channel.guild.members.fetch(donoTicket.id).catch(() => null) : null;
+    const donoTag = donoUser ? donoUser.user.tag : 'Desconhecido';
+    const donoMention = donoUser ? `<@${donoUser.user.id}>` : 'Desconhecido';
+    const canalNome = channel.name;
+    const dataGeracao = new Date().toLocaleString('pt-BR');
+    // Transcript HTML moderno
     let html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Transcript do Ticket - ${channel.name}</title>
+  <title>Transcript do Ticket - ${canalNome}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6fa; color: #222; margin: 0; padding: 24px; }
-    .header { background: #2ecc71; color: #fff; padding: 16px 24px; border-radius: 8px 8px 0 0; }
-    .ticket-info { margin: 16px 0 24px 0; font-size: 1.1em; }
-    ul { list-style: none; padding: 0; }
-    li { background: #fff; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 3px #0001; padding: 12px 18px; }
-    .author { font-weight: bold; color: #2980b9; }
-    .timestamp { color: #888; font-size: 0.95em; margin-left: 8px; }
-    .motivo { background: #eafaf1; border-left: 4px solid #2ecc71; padding: 8px 14px; margin-bottom: 18px; border-radius: 4px; }
-    .footer { margin-top: 32px; color: #888; font-size: 0.95em; text-align: right; }
+    body { font-family: 'Roboto', Arial, sans-serif; background: #181c23; color: #e6e6e6; margin: 0; padding: 0; }
+    .header { background: linear-gradient(90deg, #00c3ff 0%, #1abc9c 100%); color: #fff; padding: 32px 0 16px 0; text-align: center; }
+    .header img { width: 80px; margin-bottom: 8px; }
+    .header h1 { margin: 0; font-size: 2.2em; letter-spacing: 1px; }
+    .header p { margin: 8px 0 0 0; font-size: 1.1em; }
+    .info-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; margin: 24px 0 32px 0; }
+    .info-box { background: #23272f; border-radius: 8px; padding: 12px 24px; font-size: 1.05em; box-shadow: 0 2px 8px #0002; }
+    .messages { max-width: 900px; margin: 0 auto; }
+    .msg-card { background: #23272f; border-left: 5px solid #1abc9c; margin-bottom: 18px; border-radius: 8px; box-shadow: 0 2px 8px #0002; padding: 16px 22px; }
+    .msg-header { display: flex; align-items: center; margin-bottom: 6px; }
+    .msg-author { font-weight: bold; color: #00c3ff; margin-right: 10px; }
+    .msg-time { color: #aaa; font-size: 0.98em; }
+    .msg-content { margin-top: 4px; white-space: pre-line; }
+    .footer { margin: 40px 0 0 0; text-align: center; color: #aaa; font-size: 1em; }
+    .motivo { background: #1abc9c22; border-left: 4px solid #1abc9c; padding: 10px 18px; margin-bottom: 18px; border-radius: 6px; color: #1abc9c; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="header">
+    <img src="https://cdn.discordapp.com/icons/${channel.guild.id}/${channel.guild.icon}.png" alt="Logo" />
     <h1>Transcript do Ticket</h1>
-    <div class="ticket-info">Canal: <b>${channel.name}</b></div>
+    <p>Registro completo da conversa deste ticket.</p>
   </div>
-  <div class="motivo"><b>Motivo do fechamento:</b> ${motivoFechamento}</div>
-  <ul>`;
+  <div class="info-bar">
+    <div class="info-box">Canal: <b>${canalNome}</b></div>
+    <div class="info-box">Dono: ${donoMention}</div>
+    <div class="info-box">Data de Geração: ${dataGeracao}</div>
+    <div class="info-box">Total de Mensagens: ${sorted.length}</div>
+  </div>
+  <div class="motivo">Motivo do fechamento: ${motivoFechamento}</div>
+  <div class="messages">`;
     for (const msg of sorted) {
-      html += `<li><span class='author'>${msg.author.tag}</span> <span class='timestamp'>[${new Date(msg.createdTimestamp).toLocaleString('pt-BR')}]</span><br>${msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`;
+      html += `<div class='msg-card'><div class='msg-header'><span class='msg-author'>${msg.author.tag}</span><span class='msg-time'>${new Date(msg.createdTimestamp).toLocaleString('pt-BR')}</span></div><div class='msg-content'>${msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
     }
-    html += `</ul><div class='footer'>Transcript gerado automaticamente pelo sistema de tickets - Centro Médico Street</div></body></html>`;
+    html += `</div><div class='footer'>Transcript gerado automaticamente pelo sistema de tickets - Centro Médico Street</div></body></html>`;
     // Salva transcript temporariamente
     const fileName = `transcript-${channel.name}.html`;
     fs.writeFileSync(fileName, html);
     // Envia transcript para canal de transcripts
     const transcriptChannel = interaction.guild.channels.cache.get(process.env.TRANSCRIPT_CHANNEL_ID || config.transcriptChannelId);
     if (transcriptChannel) {
-      await transcriptChannel.send({ files: [fileName], content: `Transcript do ${channel.name}` });
+      // Embed de fechamento profissional
+      const embed = new EmbedBuilder()
+        .setTitle('📋 Log de Ticket - Fechado')
+        .setDescription('O ticket foi encerrado e o histórico completo está disponível no arquivo em anexo.')
+        .addFields(
+          { name: 'Fechado por', value: `<@${interaction.user.id}> (${interaction.user.tag})`, inline: true },
+          { name: 'Dono do Ticket', value: `${donoMention} (${donoTag})`, inline: true },
+          { name: 'Canal', value: `${canalNome}`, inline: true },
+          { name: 'Motivo', value: motivoFechamento, inline: false }
+        )
+        .setColor(0x1abc9c)
+        .setFooter({ text: 'StreetCarClub • Sistema de Tickets', iconURL: interaction.guild.iconURL() })
+        .setTimestamp();
+      await transcriptChannel.send({ embeds: [embed], files: [fileName] });
     }
     // Remove arquivo temporário
     fs.unlinkSync(fileName);
