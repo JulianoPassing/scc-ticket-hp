@@ -24,10 +24,11 @@ client.once('ready', () => {
 client.on('messageCreate', async (message) => {
   if (message.content === '!painel' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
     const embed = new EmbedBuilder()
-      .setTitle('🎫 Abrir Ticket - Centro Médico Street')
-      .setDescription('Clique no botão abaixo para abrir um ticket com a equipe de suporte.\n\nApenas a equipe de suporte tera acesso ao canal.')
-      .setColor(0x2ecc71)
-      .setFooter({ text: 'Centro Médico Street', iconURL: client.user.displayAvatarURL() });
+      .setTitle('🎫 Central de Atendimento - Centro Médico Street')
+      .setDescription('Bem-vindo ao suporte do Centro Médico Street!\n\nClique no botão abaixo para abrir um ticket e receber atendimento personalizado da nossa equipe.\n\n> **Atenção:** Apenas a equipe de suporte terá acesso ao seu ticket.\n\nSeja claro e objetivo ao descrever sua solicitação para agilizar o atendimento.')
+      .setColor(0x1abc9c)
+      .setThumbnail(client.user.displayAvatarURL())
+      .setFooter({ text: 'Sistema de Tickets • Centro Médico Street', iconURL: client.user.displayAvatarURL() });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
@@ -119,8 +120,9 @@ client.on('interactionCreate', async (interaction) => {
   // FECHAR TICKET: mostrar modal para motivo de fechamento
   if (interaction.isButton() && interaction.customId === 'close_ticket') {
     const channel = interaction.channel;
-    if (!channel.name.startsWith('ticket-')) {
-      await interaction.reply({ content: 'Este comando só pode ser usado em canais de ticket.', ephemeral: true });
+    if (!channel.name.startsWith('🎫・hp-@')) {
+      if (interaction.deferred || interaction.replied) return;
+      await interaction.reply({ content: '⚠️ Este botão só pode ser usado dentro de um canal de ticket.', ephemeral: true });
       return;
     }
     // Mostra modal para motivo de fechamento
@@ -140,8 +142,9 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'modal_motivo_fechamento') {
     const motivoFechamento = interaction.fields.getTextInputValue('motivo_fechamento');
     const channel = interaction.channel;
-    if (!channel.name.startsWith('ticket-')) {
-      await interaction.reply({ content: 'Este comando só pode ser usado em canais de ticket.', ephemeral: true });
+    if (!channel.name.startsWith('🎫・hp-@')) {
+      if (interaction.deferred || interaction.replied) return;
+      await interaction.reply({ content: '⚠️ Este botão só pode ser usado dentro de um canal de ticket.', ephemeral: true });
       return;
     }
     await interaction.reply({ content: '⏳ Salvando e finalizando o ticket... Gerando transcript detalhado para registro. Por favor, aguarde.', ephemeral: true });
