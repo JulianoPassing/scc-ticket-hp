@@ -85,6 +85,7 @@ client.on('interactionCreate', async (interaction) => {
       name: `🎫・hp-@${username}`,
       type: ChannelType.GuildText,
       parent: category ? category.id : null,
+      topic: `TICKET_USER:${interaction.user.id}`,
       permissionOverwrites: [
         {
           id: interaction.guild.id,
@@ -120,7 +121,7 @@ client.on('interactionCreate', async (interaction) => {
   // FECHAR TICKET: mostrar modal para motivo de fechamento
   if (interaction.isButton() && interaction.customId === 'close_ticket') {
     const channel = interaction.channel;
-    if (!channel.name.includes('hp-@')) {
+    if (!channel.topic || !channel.topic.startsWith('TICKET_USER:')) {
       if (interaction.deferred || interaction.replied) return;
       await interaction.reply({ content: '⚠️ Este botão só pode ser usado dentro de um canal de ticket.', ephemeral: true });
       return;
@@ -142,7 +143,7 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'modal_motivo_fechamento') {
     const motivoFechamento = interaction.fields.getTextInputValue('motivo_fechamento');
     const channel = interaction.channel;
-    if (!channel.name.includes('hp-@')) {
+    if (!channel.topic || !channel.topic.startsWith('TICKET_USER:')) {
       if (interaction.deferred || interaction.replied) return;
       await interaction.reply({ content: '⚠️ Este botão só pode ser usado dentro de um canal de ticket.', ephemeral: true });
       return;
