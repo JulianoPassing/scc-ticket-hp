@@ -2,7 +2,7 @@ import { Client, GatewayIntentBits, Partials, EmbedBuilder, ActionRowBuilder, Bu
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import config from './config.json' assert { type: 'json' };
+import config from './config.json' with { type: 'json' };
 
 dotenv.config();
 
