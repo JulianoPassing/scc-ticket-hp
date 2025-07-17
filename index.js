@@ -120,7 +120,7 @@ client.on('interactionCreate', async (interaction) => {
   // FECHAR TICKET: mostrar modal para motivo de fechamento
   if (interaction.isButton() && interaction.customId === 'close_ticket') {
     const channel = interaction.channel;
-    if (!channel.name.startsWith('🎫・hp-@')) {
+    if (!channel.name.includes('hp-@')) {
       if (interaction.deferred || interaction.replied) return;
       await interaction.reply({ content: '⚠️ Este botão só pode ser usado dentro de um canal de ticket.', ephemeral: true });
       return;
@@ -142,7 +142,7 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'modal_motivo_fechamento') {
     const motivoFechamento = interaction.fields.getTextInputValue('motivo_fechamento');
     const channel = interaction.channel;
-    if (!channel.name.startsWith('🎫・hp-@')) {
+    if (!channel.name.includes('hp-@')) {
       if (interaction.deferred || interaction.replied) return;
       await interaction.reply({ content: '⚠️ Este botão só pode ser usado dentro de um canal de ticket.', ephemeral: true });
       return;
