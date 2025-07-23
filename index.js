@@ -121,6 +121,13 @@ client.on('interactionCreate', async (interaction) => {
   // FECHAR TICKET: mostrar modal para motivo de fechamento
   if (interaction.isButton() && interaction.customId === 'close_ticket') {
     const channel = interaction.channel;
+    // Verifica se o usuário tem o cargo correto
+    const allowedRole = '1277734174635196581';
+    const member = await interaction.guild.members.fetch(interaction.user.id);
+    if (!member.roles.cache.has(allowedRole)) {
+      await interaction.reply({ content: '❌ Você não tem permissão para fechar este ticket. Apenas membros com o cargo correto podem usar este botão.', ephemeral: true });
+      return;
+    }
     if (!channel.topic || !channel.topic.startsWith('TICKET_USER:')) {
       if (interaction.deferred || interaction.replied) return;
       await interaction.reply({ content: '⚠️ Este botão só pode ser usado dentro de um canal de ticket.', ephemeral: true });
