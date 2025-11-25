@@ -78,9 +78,17 @@ client.on('interactionCreate', async (interaction) => {
     }
     // Cria o canal do ticket
     const category = interaction.guild.channels.cache.get(process.env.TICKET_CATEGORY_ID || config.ticketCategoryId);
-    const supportRole = '1277734174635196581';
+    const supportRoleId = '1277734174635196581';
     // Pega o username do usuário, removendo espaços e caracteres especiais para nome do canal
     const username = interaction.user.username.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
+    
+    // Verifica se o cargo existe
+    const supportRole = interaction.guild.roles.cache.get(supportRoleId);
+    if (!supportRole) {
+      await interaction.reply({ content: '⚠️ Erro: O cargo de suporte não foi encontrado no servidor.', ephemeral: true });
+      return;
+    }
+    
     const channel = await interaction.guild.channels.create({
       name: `🎫・hp-@${username}`,
       type: ChannelType.GuildText,
@@ -96,7 +104,7 @@ client.on('interactionCreate', async (interaction) => {
           allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory]
         },
         {
-          id: supportRole,
+          id: supportRoleId,
           allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory]
         }
       ]
@@ -114,7 +122,7 @@ client.on('interactionCreate', async (interaction) => {
         .setEmoji('🔒')
         .setStyle(ButtonStyle.Danger)
     );
-    await channel.send({ content: `<@${interaction.user.id}> <@&${supportRole}>`, embeds: [embed], components: [row] });
+    await channel.send({ content: `<@${interaction.user.id}> <@&${supportRoleId}>`, embeds: [embed], components: [row] });
     await interaction.reply({ content: `Seu ticket foi criado: ${channel}`, ephemeral: true });
     return;
   }
