@@ -130,7 +130,7 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.isButton() && interaction.customId === 'close_ticket') {
     const channel = interaction.channel;
     // Verifica se o usuário tem o cargo correto
-    const allowedRole = '1277734174635196581';
+    const allowedRole = '1317880168446038056';
     const member = await interaction.guild.members.fetch(interaction.user.id);
     if (!member.roles.cache.has(allowedRole)) {
       await interaction.reply({ content: '❌ Você não tem permissão para fechar este ticket. Apenas membros com o cargo correto podem usar este botão.', ephemeral: true });
