@@ -78,7 +78,7 @@ client.on('interactionCreate', async (interaction) => {
     }
     // Cria o canal do ticket
     const category = interaction.guild.channels.cache.get(process.env.TICKET_CATEGORY_ID || config.ticketCategoryId);
-    const supportRoleId = '1277734174635196581';
+    const supportRoleId = '1317880168446038056';
     // Pega o username do usuário, removendo espaços e caracteres especiais para nome do canal
     const username = interaction.user.username.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
     
@@ -168,7 +168,7 @@ client.on('interactionCreate', async (interaction) => {
     const messages = await channel.messages.fetch({ limit: 100 });
     const sorted = Array.from(messages.values()).sort((a, b) => a.createdTimestamp - b.createdTimestamp);
     // Dados do ticket
-    const donoTicket = channel.permissionOverwrites.cache.find(po => po.allow.has(PermissionsBitField.Flags.ViewChannel) && po.id !== '1277734174635196581' && po.id !== channel.guild.id);
+    const donoTicket = channel.permissionOverwrites.cache.find(po => po.allow.has(PermissionsBitField.Flags.ViewChannel) && po.id !== '1317880168446038056' && po.id !== channel.guild.id);
     const donoUser = donoTicket ? await channel.guild.members.fetch(donoTicket.id).catch(() => null) : null;
     const donoTag = donoUser ? donoUser.user.tag : 'Desconhecido';
     const donoMention = donoUser ? `<@${donoUser.user.id}>` : 'Desconhecido';
